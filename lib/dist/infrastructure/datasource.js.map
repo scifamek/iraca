@@ -1,0 +1,1 @@
+{"version":3,"file":"datasource.js","sourceRoot":"","sources":["../../src/infrastructure/datasource.ts"],"names":[],"mappings":";;;AAQA,MAAsB,UAAU;IAG9B,IAAW,MAAM;QACf,OAAO,IAAI,CAAC,OAAO,CAAC;IACtB,CAAC;IAED,IAAW,MAAM,CAAC,KAAa;QAC7B,IAAI,CAAC,OAAO,GAAG,KAAK,CAAC;IACvB,CAAC;CAUF;AAnBD,gCAmBC"}

@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  
+  "configurations": [
+    {
+      "name": "Dario's Tests",
+      "runtimeVersion": "default",
+      "preLaunchTask":"npm: build - examples",
+      "runtimeArgs": ["start"],
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "type": "node",
+
+      "cwd": "${workspaceFolder}/examples"
+    },
+    {
+      "name": "Dependency Injecction's Tests",
+      "runtimeVersion": "default",
+      "preLaunchTask":"npm build iraca",
+      "runtimeArgs": ["start"],
+      
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "type": "node",
+
+      "cwd": "${workspaceFolder}/lib/src"
+    }
+  ]
+}

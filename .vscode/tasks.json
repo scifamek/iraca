@@ -1,0 +1,23 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "examples",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build - examples",
+			"detail": "npx tsc -p tsconfig.json"
+		},
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "lib",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm build iraca",
+			"detail": "npx tsc -p tsconfig.json"
+		}
+	]
+}

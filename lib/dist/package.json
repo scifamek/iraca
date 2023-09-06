@@ -1,0 +1,37 @@
+{
+  "name": "@scifamek-open-source/iraca",
+  "version": "1.0.0",
+  "description": "This one is a minimal framework for making a server oriented by clean architecture.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc -p tsconfig.json && py scripts/build.py",
+    "start": "node dist/gohan.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scifamek/iraca.git"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.10.1",
+    "rxjs": "^6.0.0",
+    "moment": "^2.29.3"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./dependency-injection": "./dependency-injection/index.js",
+    "./web-api": "./web-api/index.js",
+    "./infrastructure": "./infrastructure/index.js",
+    "./helpers": "./helpers/index.js",
+    "./domain": "./domain/index.js"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.4"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/scifamek/iraca/issues"
+  },
+  "homepage": "https://github.com/scifamek/iraca#readme"
+}
