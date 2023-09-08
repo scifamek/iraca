@@ -73,12 +73,19 @@ export abstract class HttpController {
   }
 
   private static formatMessage(message: string, data: any) {
-    const keys = this.getKeys(message);
-    if (keys) {
-      for (const key of keys) {
-        message = message.replace(`{${key}}`, data[key]);
-      }
+    if (!data) {
+      return message;
     }
+    const pattern = '{([A-Za-z]+)}';
+    const regex = new RegExp(pattern);
+    let temp = regex.exec(message);
+    while (temp && temp.length > 0) {
+      const key = temp[1];
+      message = message.replace(`{${key}}`, data[key] || '');
+
+      temp = regex.exec(message);
+    }
+
     return message;
   }
 
@@ -87,7 +94,7 @@ export abstract class HttpController {
     usecaseIdentifier: string,
     param: any,
     func: Function | null,
-    response: Response<any, Record<string, any>>,
+    response: Response,
     config: MessagesConfiguration
   ) {
     const logger = container.getInstance<any>('Logger').instance;
@@ -149,12 +156,5 @@ export abstract class HttpController {
         complete: () => {},
       });
     }
-  }
-
-  private static getKeys(message: string) {
-    const pattern = '{([A-Za-z]+)}';
-
-    const regex = new RegExp(pattern);
-    return regex.exec(message);
   }
 }

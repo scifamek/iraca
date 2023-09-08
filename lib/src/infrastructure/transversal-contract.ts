@@ -2,7 +2,7 @@ import { Observable, OperatorFunction, of, zip } from 'rxjs';
 import { filter, map, mergeMap } from 'rxjs/operators';
 import { DataSource } from './datasource';
 import { Mapper } from './mapper';
-import { Filters } from './implementations/firebase-filter-query-manager';
+import { Filters } from '../domain';
 
 export abstract class TransversalContract<Entity> {
   entity!: string;

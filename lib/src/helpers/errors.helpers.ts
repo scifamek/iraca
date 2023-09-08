@@ -1,5 +1,6 @@
 export function generateError(name: string, message: string) {
   const ErrorClass = class extends Error {
+    static id = name;
     constructor(extraData?: any) {
       super();
       this.name = name;
@@ -10,7 +11,7 @@ export function generateError(name: string, message: string) {
     }
 
     formatMessage(extraData: any, message: string) {
-      const pattern = /\$\{([\w]+)\}/;
+      const pattern = /\{([\w]+)\}/;
       let find = pattern.exec(message);
       while (find) {
         const valueToReplace = extraData[find[1]] || '';

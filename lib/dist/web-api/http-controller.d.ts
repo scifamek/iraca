@@ -16,5 +16,4 @@ export declare abstract class HttpController {
     static readyHandler(_request: Request, response: Response): Response<any, Record<string, any>>;
     private static formatMessage;
     private static generalHandlerController;
-    private static getKeys;
 }

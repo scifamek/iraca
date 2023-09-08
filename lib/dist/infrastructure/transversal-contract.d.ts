@@ -1,7 +1,7 @@
 import { Observable, OperatorFunction } from 'rxjs';
 import { DataSource } from './datasource';
 import { Mapper } from './mapper';
-import { Filters } from './implementations/firebase-filter-query-manager';
+import { Filters } from '../domain';
 export declare abstract class TransversalContract<Entity> {
     protected dataSource: DataSource<Entity>;
     protected mapper: Mapper<Entity>;

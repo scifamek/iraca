@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { Filters } from './implementations/firebase-filter-query-manager';
+import { Filters } from '../domain';
 
 export interface DataSourceFilter {
   equals?: any;
