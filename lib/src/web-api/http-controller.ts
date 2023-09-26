@@ -7,15 +7,20 @@ import { BaseHTTPResponse } from './response.model';
 import { Traslator } from './translator';
 import moment = require('moment');
 
+export interface HandlerConfiguration {
+  container: Container;
+  usecaseId: string;
+  response: Response;
+  messageConfiguration: MessagesConfiguration;
+  translatorId?: string;
+  loggerId?: string;
+  usecaseParam?: any;
+}
+
 export abstract class HttpController {
-  public static handler<U extends Usecase<any, any>>(config: {
-    container: Container;
-    usecaseId: string;
-    response: Response;
-    messageConfiguration: MessagesConfiguration;
-    translatorId?: string;
-    usecaseParam?: any;
-  }) {
+  static loggerId = 'Logger';
+  static logger: any;
+  public static handler<U extends Usecase<any, any>>(config: HandlerConfiguration) {
     let func = null;
     const { translatorId, container, usecaseId, usecaseParam, response, messageConfiguration } = config;
     if (translatorId) {
@@ -97,8 +102,23 @@ export abstract class HttpController {
     response: Response,
     config: MessagesConfiguration
   ) {
-    const logger = container.getInstance<any>('Logger').instance;
+    let insideLogger: any;
+    if (this.logger) {
+      insideLogger = this.logger;
+    } else if (this.loggerId) {
+      insideLogger = container.getInstance<any>(this.loggerId).instance;
+    }
     const usecase = container.getInstance<U>(usecaseIdentifier).instance;
+
+    insideLogger?.group(usecaseIdentifier);
+
+    if (typeof param == 'object') {
+      insideLogger?.info(`Param:\n\t${JSON.stringify(param, null, 2)}`);
+    } else if (typeof param == 'undefined') {
+      insideLogger?.info(`\n\tWitout Param`);
+    } else {
+      insideLogger?.info(`Param:\n\t\t${param}`);
+    }
 
     let dataRes = null;
     let params = param;
@@ -126,7 +146,16 @@ export abstract class HttpController {
         next: (data: any) => {
           const final = moment();
           const rest = final.diff(prev, 'milliseconds');
-          logger.info(`Process Time (${usecaseIdentifier}): ${rest}ms, ${rest / 1000}s`);
+
+          if (typeof data == 'object') {
+            insideLogger?.info(`Usecase response:\n\t\t${JSON.stringify(data, null, 2)}`);
+          } else if (typeof data == 'undefined') {
+            insideLogger?.info(`\n\tWitout Response`);
+          } else {
+            insideLogger?.info(`Usecase response:\n\t\t${param}`);
+          }
+
+          insideLogger.info(`Process Time: ${rest}ms, ${rest / 1000}s`);
           let code = '';
           let message = '';
           if (typeof config.successCode == 'string') {
@@ -145,15 +174,16 @@ export abstract class HttpController {
             },
             data,
           } as BaseHTTPResponse<any>);
-          logger.info('Output ', usecaseIdentifier, new Date());
         },
         error: (error: any) => {
-          console.error('*:* Error:: ', error?.name, error?.message);
-
+          insideLogger?.error(`Error: ${error?.name}, ${error?.message}`);
           const resp = this.makeErrorMessage(config, error);
           response.send(resp);
         },
-        complete: () => {},
+        complete: () => {
+          insideLogger?.info(`Output: ${new Date()}`);
+          insideLogger?.closeGroup();
+        },
       });
     }
   }

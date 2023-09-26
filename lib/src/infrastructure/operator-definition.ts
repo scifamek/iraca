@@ -7,7 +7,7 @@ export function permissiveEqualOperator<T>(key: string, value: string): (source:
         next: (items: T) => {
           suscriber.next(
             (items as unknown as Array<any>).filter((item) => {
-              return (item[key] as string).toUpperCase() === value.toUpperCase();
+              return (item[key] as string)?.toUpperCase() === value.toUpperCase();
             }) as unknown as T
           );
         },
