@@ -1,6 +1,6 @@
 {
   "name": "@scifamek-open-source/iraca",
-  "version": "2.1.1",
+  "version": "2.4.0",
   "description": "This one is a minimal framework for making a server oriented by clean architecture.",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

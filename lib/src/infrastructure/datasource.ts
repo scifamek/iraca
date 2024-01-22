@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { Filters } from '../domain';
+import { CompositeFilters } from '../domain/filters';
 
 export interface DataSourceFilter {
   equals?: any;
@@ -19,7 +20,7 @@ export abstract class DataSource<T> {
 
   abstract deleteById(id: string): Observable<void>;
   abstract getByFilter(config?: {
-    filters?: Filters;
+    filters?: CompositeFilters | Filters;
     pagination?: { pageSize: number; pageNumber: number };
   }): Observable<T[]>;
   abstract getById(id: string): Observable<T | undefined>;

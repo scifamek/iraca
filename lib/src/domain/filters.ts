@@ -9,6 +9,11 @@ export interface Filters {
   [index: string]: Filter | Filter[];
 }
 
+export interface CompositeFilters {
+  'or'?: Filters, 
+  'and'?: Filters, 
+}
+
 export function makeFilters(data: any, operator: Operator = 'contains') {
   const response: Filters = {};
 

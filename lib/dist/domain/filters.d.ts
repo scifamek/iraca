@@ -7,4 +7,8 @@ export interface Filter {
 export interface Filters {
     [index: string]: Filter | Filter[];
 }
+export interface CompositeFilters {
+    'or'?: Filters;
+    'and'?: Filters;
+}
 export declare function makeFilters(data: any, operator?: Operator): Filters;

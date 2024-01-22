@@ -2,7 +2,7 @@ import { Observable, OperatorFunction, of, zip } from 'rxjs';
 import { filter, map, mergeMap } from 'rxjs/operators';
 import { DataSource } from './datasource';
 import { Mapper } from './mapper';
-import { Filters } from '../domain';
+import { CompositeFilters, Filters } from '../domain';
 
 export abstract class TransversalContract<Entity> {
   entity!: string;
@@ -14,21 +14,37 @@ export abstract class TransversalContract<Entity> {
     return this.dataSource.deleteById(id);
   }
 
-  filter(filter: Filters): Observable<Array<Entity>> {
+  filter(filter: Filters | CompositeFilters): Observable<Array<Entity>> {
     this.refreshEntity();
-    const mappedFilters = { ...filter };
-    for (const key in filter) {
-      if (Object.prototype.hasOwnProperty.call(filter, key)) {
-        const element = filter[key];
-        delete mappedFilters[key];
-        mappedFilters[this.mapper.attributesMapper[key].name] = element;
+    const castedFilters = filter as CompositeFilters;
+    let mappedFilters: CompositeFilters | null = null;
+    if (castedFilters.and || castedFilters.or) {
+      mappedFilters = {};
+      if (castedFilters.and) {
+        mappedFilters['and'] = extract(castedFilters.and, this.mapper);
       }
+      if (castedFilters.or) {
+        mappedFilters['or'] = extract(castedFilters.or, this.mapper);
+      }
+    } else {
+      mappedFilters = extract(filter as Filters, this.mapper);
     }
     return this.dataSource
       .getByFilter({
-        filters: mappedFilters,
+        filters: mappedFilters!,
       })
       .pipe(this.mapItems());
+
+    function extract(fx: Filters, mapper: Mapper<Entity>) {
+      const mappedFilters = { ...fx };
+      const f = fx;
+      for (const key in f) {
+        const element = f[key];
+        delete mappedFilters[key];
+        mappedFilters[mapper.attributesMapper[key].name] = element;
+      }
+      return mappedFilters;
+    }
   }
 
   get(pagination?: { pageNumber: number; pageSize: number }): Observable<Entity[]> {

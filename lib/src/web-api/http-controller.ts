@@ -144,8 +144,6 @@ export abstract class HttpController {
 
       dataRes.subscribe({
         next: (data: any) => {
-          const final = moment();
-          const rest = final.diff(prev, 'milliseconds');
 
           if (typeof data == 'object') {
             insideLogger?.info(`Usecase response:\n\t\t${JSON.stringify(data, null, 2)}`);
@@ -155,7 +153,6 @@ export abstract class HttpController {
             insideLogger?.info(`Usecase response:\n\t\t${param}`);
           }
 
-          insideLogger.info(`Process Time: ${rest}ms, ${rest / 1000}s`);
           let code = '';
           let message = '';
           if (typeof config.successCode == 'string') {
@@ -181,7 +178,9 @@ export abstract class HttpController {
           response.send(resp);
         },
         complete: () => {
-          insideLogger?.info(`Output: ${new Date()}`);
+          const final = moment();
+          const rest = final.diff(prev, 'milliseconds');
+          insideLogger?.info(`Process Time: ${rest}ms, ${rest / 1000}s`);
           insideLogger?.closeGroup();
         },
       });
