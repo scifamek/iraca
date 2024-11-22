@@ -16,6 +16,7 @@ export declare abstract class HttpController {
     static loggerId: string;
     static logger: any;
     static handler<U extends Usecase<any, any>>(config: HandlerConfiguration): void;
+    static makeErrorCode(exceptionName: string): string;
     static makeErrorMessage(config: MessagesConfiguration | MessagesConfiguration, error?: Error): BaseHTTPResponse<undefined>;
     static readyHandler(_request: Request, response: Response): Response<any, Record<string, any>>;
     private static formatMessage;
