@@ -44,7 +44,7 @@ export abstract class HttpController {
 	static makeErrorCode(exceptionName: string): string {
 		return exceptionName
 			.replace(/([a-z])([A-Z])/g, '$1-$2')
-			.replace(/Error$/, ':ERROR')
+			.replace(/-Error$/, ':ERROR')
 			.toUpperCase();
 	}
 	static makeErrorMessage(
@@ -88,7 +88,11 @@ export abstract class HttpController {
 				}
 			}
 		}
-		const code = `${config.identifier}:${httpMessageCode}`;
+		const p = /[A-Z]+:[A-Z\-]+:[A-Z]+/g;
+		let code = `${httpMessageCode}`;
+		if (!httpMessageCode.match(p)) {
+			code = `${config.identifier}:${httpMessageCode}`;
+		}
 		return {
 			meta: {
 				code,
@@ -134,6 +138,7 @@ export abstract class HttpController {
 		}
 		const usecase = container.getInstance<U>(usecaseIdentifier).instance;
 
+		//TODO: Verificar qeu el caso de uso exsita en el contenedor de depenencias
 		insideLogger?.group(usecaseIdentifier);
 
 		if (typeof param == 'object') {
