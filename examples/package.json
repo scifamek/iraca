@@ -1,19 +1,22 @@
 {
-  "name": "examples",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tsc -p tsconfig.json",
-    "start": "node dist/dario.js"
-  },
-  "dependencies": {
-    "iraca": "file:../lib/dist"
-  },
-  "devDependencies": {
-    "typescript": "^4.5.4"
-  },
-  "author": "",
-  "license": "ISC"
+	"name": "examples",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "npx tsc -p tsconfig.json",
+		"start": "node dist/dario.js"
+	},
+	"dependencies": {
+		"iraca": "file:../lib/dist",
+		"express": "4.21.2",
+		"rxjs": "^6.0.0"
+	},
+	"devDependencies": {
+		"@types/express": "^5.0.0",
+		"typescript": "^4.5.4"
+	},
+	"author": "",
+	"license": "ISC"
 }
