@@ -1,162 +1,259 @@
-import { ParticleDefinition, ParticleConfiguration, ParticleValueConfiguration, Snapshot, Status } from './models';
+import {
+	AbstractParticleConfiguration,
+	ClassParticleDefinition,
+	GenericParticleConfiguration,
+	ParticleConfiguration,
+	ParticleDefinition,
+	ParticleValueConfiguration,
+	Status,
+	ValueParticleDefinition,
+} from './models';
 
-export class Container {
-  pending: {
-    [pendingId: string]: (ParticleConfiguration | null)[];
-  };
-  table: {
-    [index: string]: ParticleDefinition<any>;
-  };
+export class IracaContainer {
+	readonly pendingParticles: Map<string, ParticleConfiguration[]>;
+	configsTable: Map<string, ParticleDefinition>;
+	instancesTable: Map<
+		string,
+		Array<{
+			generatedBy: string;
+			instance: any;
+		}>
+	>;
 
-  constructor() {
-    this.table = {};
-    this.pending = {};
-  }
-  addAll(container: Container) {
-    this.table = { ...container.table };
-  }
+	constructor() {
+		this.configsTable = new Map();
+		this.instancesTable = new Map();
+		this.pendingParticles = new Map();
+	}
+	addAll(container: IracaContainer) {
+		this.configsTable = {...container.configsTable};
+	}
 
-  add(config: ParticleConfiguration): boolean {
-    const res = this._add(config);
-    this.removeEmptyPendings();
-    return res;
-  }
+	add(
+		config: Omit<GenericParticleConfiguration, 'id'> | Omit<AbstractParticleConfiguration, 'id'>
+	): boolean {
+		const c = Object.assign(config);
+		if (!c.id) {
+			const component =
+				(c as GenericParticleConfiguration).component ||
+				(c as AbstractParticleConfiguration).abstraction;
+			if (c) c.id = component.name;
+		}
+		if (!c.strategy) {
+			c.strategy = 'singleton';
+		}
+		const res = this._add(c);
+		return res;
+	}
 
-  _add(config: ParticleConfiguration): boolean {
-    if (this.table[config.id] && this.table[config.id].constructor !== null) {
-      return true;
-    }
-    let typeClass = config.kind;
-    if (config.override) {
-      typeClass = config.override;
-    }
+	makeInstance(
+		typeClass: any,
+		config: ParticleConfiguration,
+		state: {
+			foundDependencies: {
+				[dependencyName: string]: ParticleDefinition;
+			};
+			notFoundDependencies: string[];
+			status: Status;
+		}
+	) {
+		console.log(typeClass, config, state);
 
-    const myState = this.getStateByDependencies(config.dependencies || []);
+		// const singletons = Object.values(state.dependencies)
+		// 	.filter((x) => x.strategy === 'singleton')
+		// 	.map((snapshot) => snapshot.instance);
+		// const factories = Object.values(state.dependencies)
+		// 	.filter((x) => x.strategy === 'factory')
+		// 	.map((snapshot) => snapshot.instances);
+		// const constructor = () => Reflect.construct(typeClass, singletons);
+		// this.configsTable.set(config.id, {
+		// 	constructor,
+		// 	config,
+		// 	status: 'resolved',
+		// });
+	}
+	_add(config: ParticleConfiguration): boolean {
+		const prevRegisteredParticule = this.configsTable.get(config.id);
+		if (prevRegisteredParticule && prevRegisteredParticule.constructor !== null) {
+			return true;
+		}
+		let typeClass =
+			(config as GenericParticleConfiguration).component ||
+			(config as AbstractParticleConfiguration).implementation;
 
-    if (myState.status === 'resolved') {
-      const constructor = () =>
-        Reflect.construct(
-          typeClass,
-          Object.values(myState.dependencies).map((snapshot) => snapshot.instance)
-        );
+		const myState = this.getStateByDependencies(config.dependencies || []);
+		console.log(111, typeClass, myState);
 
-      this.table[config.id] = {
-        constructor,
-        snapshot: {
-          instance: constructor(),
-          status: 'resolved',
-        },
-      };
+		if (myState.status === 'resolved') {
+			this.configsTable.set(config.id, {
+				status: 'resolved',
+				config,
+			} as ClassParticleDefinition);
+			this.makeInstance;
+			// if (config.strategy == 'singleton') {
+			// 	this.makeInstance(typeClass, config, myState);
+			// }
 
-      this.resolveDependentParticles(config);
-      return true;
-    } else {
-      this.addPending(config, myState.dependencies);
+			this.resolveDependentParticles(config);
+			return true;
+		} else {
+			// this.addPending(config, myState.notFoundDependencies);
+			this.addPending;
 
-      this.table[config.id] = {
-        constructor: null,
-        snapshot: {
-          instance: null,
-          status: 'pending',
-        },
-      };
-      return false;
-    }
-  }
+			this.configsTable.set(config.id, {
+				status: 'pending',
+				config,
+			} as ClassParticleDefinition);
 
-  addValue(config: ParticleValueConfiguration) {
-    this.table[config.id] = {
-      constructor: () => config.value,
-      snapshot: {
-        instance: config.value,
-        status: 'resolved',
-      },
-    };
-    this.resolveDependentParticles(config);
-    this.removeEmptyPendings();
-  }
+			return false;
+		}
+	}
 
-  private getStateByDependencies(dependenciesId: string[]) {
-    const response: {
-      [dependencyName: string]: Snapshot<unknown>;
-    } = {};
+	addValue(config: ParticleValueConfiguration) {
+		this.configsTable.set(config.id, {
+			value: config.value,
+			status: 'resolved',
+		} as ValueParticleDefinition);
+		this.resolveDependentParticles(config);
+	}
 
-    let generalStatus: Status = 'resolved';
-    for (const dep of dependenciesId) {
-      const instance: Snapshot<unknown> = this.getInstance(dep);
+	private getStateByDependencies(dependenciesId: string[]) {
+		const foundDependencies: {
+			[dependencyName: string]: ParticleDefinition;
+		} = {};
+		const notFoundDependencies: Array<string> = [];
 
-      if (['no-resolved', 'pending'].includes(instance.status)) {
-        generalStatus = 'pending';
-      }
-      response[dep] = instance;
-    }
-    return { dependencies: response, status: generalStatus };
-  }
+		let status: Status = 'resolved';
+		for (const dependencyId of dependenciesId) {
+			const configuration: ParticleDefinition | undefined = this.configsTable.get(dependencyId);
+			if (configuration) {
+				if (['no-resolved', 'pending'].includes(configuration.status)) {
+					status = 'pending';
+				}
+				foundDependencies[dependencyId] = configuration;
+			} else {
+				notFoundDependencies.push(dependencyId);
+				status = 'pending';
+			}
+		}
+		return {foundDependencies, notFoundDependencies, status};
+	}
 
-  getInstance<T>(id: string): Snapshot<T> {
-    const savedKindConfiguration: ParticleDefinition<T> = this.table[id];
-    if (savedKindConfiguration) {
-      return savedKindConfiguration.snapshot;
-    }
-    const temp: ParticleDefinition<T> = {
-      constructor: null,
-      snapshot: {
-        instance: null,
-        status: 'no-resolved',
-      },
-    };
-    this.table[id] = temp;
+	flush(id: Symbol){
+		
+	}
+	getInstance<T>(id: string, parentId?: string): T {
+		console.log('Obteniendo ', id, parentId);
 
-    return temp.snapshot;
-  }
+		const savedConfiguration: ParticleDefinition | undefined = this.configsTable.get(id);
+		if (savedConfiguration) {
+			if (savedConfiguration.status == 'resolved') {
+				if ((savedConfiguration.config as ParticleValueConfiguration).value) {
+					return (savedConfiguration as ValueParticleDefinition).value as T;
+				}
 
-  private removeEmptyPendings() {
-    const newPendings: {
-      [pendingId: string]: (ParticleConfiguration | null)[];
-    } = {};
-    for (const key in this.pending) {
-      if (Object.prototype.hasOwnProperty.call(this.pending, key)) {
-        const dependencies: (ParticleConfiguration | null)[] = this.pending[key];
-        const cleaned = dependencies.filter((d) => !!d);
+				const innerConfig = savedConfiguration.config as ParticleConfiguration;
+				console.log(innerConfig.strategy,45444);
+				
+				if (innerConfig.strategy == 'singleton') {
+					const tentativeInstance = this.instancesTable.get(id);
 
-        if (cleaned.length > 0) {
-          newPendings[key] = cleaned;
-        }
-      }
-    }
+					if (tentativeInstance && tentativeInstance.length) {
+						return tentativeInstance[0].instance as T;
+					}
+					let typeClass =
+						(savedConfiguration.config as GenericParticleConfiguration).component ||
+						(savedConfiguration.config as AbstractParticleConfiguration).implementation;
 
-    this.pending = newPendings;
-  }
+					const depnden: any[] = [];
+					const dependencies =
+						(savedConfiguration.config as ParticleConfiguration).dependencies || [];
+					for (const ins of dependencies) {
+						const ii = this.getInstance(ins, id);
+						depnden.push(ii);
+					}
+					const constructor = Reflect.construct(typeClass, depnden);
+					const instance = constructor;
+					this.instancesTable.set(id, [
+						{
+							generatedBy: parentId || id,
+							instance,
+						},
+					]);
+					return instance as T;
+				} else {
+					const dependencies =
+						(savedConfiguration.config as ParticleConfiguration).dependencies || [];
+					const depnden: any[] = [];
+					for (const ins of dependencies) {
+						const ii = this.getInstance(ins, id);
+						depnden.push(ii);
+					}
+					let typeClass =
+						(savedConfiguration.config as GenericParticleConfiguration).component ||
+						(savedConfiguration.config as AbstractParticleConfiguration).implementation;
 
-  private resolveDependentParticles(config: ParticleConfiguration | ParticleValueConfiguration) {
-    if (Object.prototype.hasOwnProperty.call(this.pending, config.id)) {
-      const dependencies: any[] = this.pending[config.id];
-      for (let i = 0; i < dependencies.length; i++) {
-        const dependentConfig = dependencies[i];
+					console.log(' / ', depnden);
 
-        const res = this._add(dependentConfig);
-        if (res) {
-          dependencies[i] = null;
-        }
-      }
-    }
-  }
+					const constructor = Reflect.construct(typeClass, depnden);
+					const instance = constructor;
 
-  private addPending<T>(config: ParticleConfiguration, dependencies: { [dependencyName: string]: Snapshot<T> }) {
-    for (const dependencyName in dependencies) {
-      if (Object.prototype.hasOwnProperty.call(dependencies, dependencyName)) {
-        const dependencyObj = dependencies[dependencyName];
+					if (!this.instancesTable.get(id)) {
+						this.instancesTable.set(id, []);
+					}
+					const prev = this.instancesTable.get(id);
+					prev?.push({
+						generatedBy: parentId || id,
+						instance,
+					});
+					return instance as T;
+				}
+			} else {
+				throw new Error('Class not resolved');
+			}
+		}
+		throw new Error(`${id} component is not configuret yet`);
+	}
 
-        if (dependencyObj.status !== 'resolved') {
-          if (!this.pending[dependencyName]) {
-            this.pending[dependencyName] = [];
-          }
-          const exist = this.pending[dependencyName].filter((x: ParticleConfiguration | null) => x && x.id === config.id).length > 0;
-          if (!exist) {
-            this.pending[dependencyName].push(config);
-          }
-        }
-      }
-    }
-  }
+	private resolveDependentParticles(config: ParticleConfiguration | ParticleValueConfiguration) {
+		const dependents = this.pendingParticles.get(config.id);
+
+		const newDependents = [];
+		if (dependents) {
+			for (let i = 0; i < dependents.length; i++) {
+				const dependentConfig = dependents[i];
+				const res = this._add(dependentConfig);
+				if (!res) {
+					newDependents.push(dependentConfig);
+				}
+			}
+			dependents.splice(0, dependents.length, ...newDependents);
+		}
+		if (!!dependents && dependents.length == 0) {
+			this.pendingParticles.delete(config.id);
+		}
+	}
+
+	private addPending(
+		config: ParticleConfiguration,
+		dependencies: {[dependencyName: string]: ParticleDefinition}
+	) {
+		for (const dependencyName in dependencies) {
+			const dependencyObj = dependencies[dependencyName];
+
+			if (dependencyObj.status !== 'resolved') {
+				if (!this.pendingParticles.get(dependencyName)) {
+					this.pendingParticles.set(dependencyName, []);
+				}
+				const dep = this.pendingParticles.get(dependencyName);
+
+				if (dep) {
+					const exist = dep.filter((x) => x && x.id === config.id).length > 0;
+					if (!exist) {
+						dep.push(config);
+					}
+				}
+			}
+		}
+	}
 }

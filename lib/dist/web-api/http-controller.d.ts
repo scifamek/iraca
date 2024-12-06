@@ -1,10 +1,10 @@
 import { Response } from 'express';
-import { Container } from '../dependency-injection/container';
+import { IracaContainer } from '../dependency-injection/container';
 import { Usecase } from '../domain/usecase';
 import { MessagesConfiguration } from './messages-configuration';
 import { BaseHTTPResponse } from './response.model';
 export interface HandlerConfiguration {
-    container: Container;
+    container: IracaContainer;
     usecaseId: string;
     response: Response;
     messageConfiguration: MessagesConfiguration;

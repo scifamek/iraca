@@ -1,90 +1,95 @@
-import { Container } from "./dependency-injection/container";
+import { DomainEvent, Iraca } from './config/system';
+import { IracaContainer } from './dependency-injection/container';
 
-class A {}
-class B {
-  constructor(_a: A) {}
+export class B {
+	constructor(_a: A) {}
 }
-class C {
-  constructor(_b: B) {}
-
-  hi() {
-    console.log('Clase C:');
-  }
+export class A {
+	data: any = '#';
+	public save(data: any) {
+		this.data = data;
+	}
+	hi() {
+		return '.A.' + this.data;
+	}
 }
-class D {
-  constructor(_a: A) {}
-  hi() {
-    console.log('SClase D:');
-  }
+export class C {
+	data: any = '#';
+	constructor(_b: B) {}
+	save(data: any) {
+		this.data = data;
+	}
+	hi() {
+		return '.C.' + this.data;
+	}
+}
+export class D {
+	constructor(private a: A, private c: C) {}
+	hi() {
+		console.log(this.a.hi() + ' - ' + this.c.hi());
+	}
 }
 
-const container = new Container();
+const container = new IracaContainer();
 
+// container.add({
+// 	component: B,
+// 	dependencies: ['A'],
+// });
+
+// container.add({
+// 	component: C,
+// 	dependencies: ['B'],
+// });
 container.add({
-  id: 'B',
-  kind: B,
-  strategy: 'singleton',
-  dependencies: ['A'],
+	component: A,
+	strategy: 'factory',
 });
-console.log('B was added');
-
-console.log(`B should be shown as Pending: ${container.getInstance<B>('B').status}`);
-
 container.add({
-  id: 'C',
-  kind: C,
-  strategy: 'singleton',
-  dependencies: ['B'],
-});
-
-console.log('C was added');
-console.log(`C should be shown as Pending: ${container.getInstance<B>('C').status}`);
-
-container.add({
-  id: 'A',
-  kind: A,
-  strategy: 'singleton',
-  dependencies: ['FIREBASE_INIT'],
-});
-console.log('A was added');
-console.log(`A should be shown as Pending: ${container.getInstance<B>('A').status}`);
-
-container.add({
-  id: 'D',
-  kind: D,
-  strategy: 'singleton',
-  dependencies: ['A'],
+	component: C,
+	strategy: 'factory',
 });
 
-console.log('D was added');
-console.log(`D should be shown as Pending: ${container.getInstance<B>('D').status}`);
+container.add({
+	component: D,
+	dependencies: ['A', 'C'],
+});
 
-const FIREBASE_INIT = { l: 213 };
+const FIREBASE_INIT = {l: 213};
 
 container.addValue({
-  id: 'FIREBASE_INIT',
-  value: FIREBASE_INIT,
+	id: 'FIREBASE_INIT',
+	value: FIREBASE_INIT,
 });
 
-console.log('FIREBASE_INIT was added');
-console.log(`FIREBASE_INIT should be shown as Resolved: ${container.getInstance<B>('FIREBASE_INIT').status}`);
-console.log(
-  'Then, A, B , C and D should be shown as  Resolved:',
-
-  JSON.stringify(
-    {
-      A: container.getInstance<A>('A').status,
-      B: container.getInstance<B>('B').status,
-      C: container.getInstance<C>('C').status,
-      D: container.getInstance<D>('D').status,
-    },
-    null,
-    2
-  )
-);
-
-console.log(container.pending);
+const d = container.getInstance<D>('D');
 
 
-const g = container.getInstance<D>('D').instance!;
-g.hi();
+
+
+const a = container.getInstance<A>('A');
+
+d.hi();
+console.log(a);
+
+a.save('%');
+
+d.hi();
+const aa = container.getInstance<A>('A')!;
+const cc = container.getInstance<C>('C')!;
+cc.save('|');
+d.hi();
+aa.save('&');
+d.hi();
+
+console.log(container.instancesTable);
+
+
+const iraca = new Iraca(container);
+
+iraca.notify(new DomainEvent('EVENT1', 789));
+iraca.notify(new DomainEvent('EVENT2', 'Deivis'));
+
+iraca.on('EVENT3', (payload) => {
+	console.log('Respondió el usecase ', payload);
+});

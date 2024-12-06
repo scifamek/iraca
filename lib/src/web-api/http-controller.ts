@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { Container } from '../dependency-injection/container';
+import { IracaContainer } from '../dependency-injection/container';
 import { Usecase } from '../domain/usecase';
 import { DEFAULT_MESSAGES } from './code-responses';
 import { MessagesConfiguration, MessagesConfigurationWithExceptions } from './messages-configuration';
@@ -8,7 +8,7 @@ import { Traslator } from './translator';
 import moment = require('moment');
 
 export interface HandlerConfiguration {
-	container: Container;
+	container: IracaContainer;
 	usecaseId: string;
 	response: Response;
 	messageConfiguration: MessagesConfiguration;
@@ -25,7 +25,7 @@ export abstract class HttpController {
 		const {translatorId, container, usecaseId, usecaseParam, response, messageConfiguration} =
 			config;
 		if (translatorId) {
-			const translator = container.getInstance<Traslator<any>>(translatorId).instance;
+			const translator = container.getInstance<Traslator<any>>(translatorId);
 			if (translator) {
 				func = translator.fromJson;
 			}
@@ -123,7 +123,7 @@ export abstract class HttpController {
 	}
 
 	private static generalHandlerController<U extends {call: (param?: any) => any}>(
-		container: Container,
+		container: IracaContainer,
 		usecaseIdentifier: string,
 		param: any,
 		func: Function | null,
@@ -134,9 +134,9 @@ export abstract class HttpController {
 		if (this.logger) {
 			insideLogger = this.logger;
 		} else if (this.loggerId) {
-			insideLogger = container.getInstance<any>(this.loggerId).instance;
+			insideLogger = container.getInstance<any>(this.loggerId);
 		}
-		const usecase = container.getInstance<U>(usecaseIdentifier).instance;
+		const usecase = container.getInstance<U>(usecaseIdentifier);
 
 		//TODO: Verificar qeu el caso de uso exsita en el contenedor de depenencias
 		insideLogger?.group(usecaseIdentifier);

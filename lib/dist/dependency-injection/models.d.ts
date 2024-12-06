@@ -1,21 +1,30 @@
 export type Status = 'resolved' | 'pending' | 'no-resolved';
 export type Particle = any;
-export interface ParticleConfiguration {
-    dependencies?: string[];
+export interface BaseParticleConfiguration {
     id: string;
-    kind: any;
-    override?: any;
-    strategy: 'singleton' | 'factory';
+    dependencies?: string[];
+    strategy?: 'singleton' | 'factory';
 }
+export interface GenericParticleConfiguration extends BaseParticleConfiguration {
+    component: any;
+}
+export interface AbstractParticleConfiguration extends BaseParticleConfiguration {
+    abstraction: any;
+    implementation: any;
+}
+export type ParticleConfiguration = GenericParticleConfiguration | AbstractParticleConfiguration;
 export interface ParticleValueConfiguration {
     id: string;
     value: any;
 }
-export interface ParticleDefinition<T> {
-    constructor: Function | null;
-    snapshot: Snapshot<T>;
-}
-export interface Snapshot<T> {
-    instance: T | null;
+export interface ClassParticleDefinition {
     status: Status;
+    config: ParticleConfiguration;
+    strategy: 'singleton' | 'factory';
 }
+export interface ValueParticleDefinition {
+    value: any;
+    status: Status;
+    config: ParticleValueConfiguration;
+}
+export type ParticleDefinition = ClassParticleDefinition | ValueParticleDefinition;
