@@ -7,23 +7,30 @@ import { ExpressController } from 'iraca/web-api';
 import { of } from 'rxjs';
 import express = require('express');
 
-class A extends Usecase<any, any> {
-	call() {
-		return of('HOla');
+class GetNoProgresistsUsecase extends Usecase<any, any> {
+	call(params: any) {
+		console.log(params);
+		const {userId} = params;
+
+		return of('Yo no soy progresista, soy ' + userId);
 	}
 }
 class B {
-	constructor(_a: A) {}
+	constructor(_a: GetNoProgresistsUsecase) {}
 }
 class C {
 	constructor(_b: B) {}
+
+	call() {
+		return of('Hola C');
+	}
 
 	hi() {
 		console.log('Clase C:');
 	}
 }
 class D {
-	constructor(_a: A) {}
+	constructor(_a: GetNoProgresistsUsecase) {}
 }
 
 const container = new Container();
@@ -49,8 +56,8 @@ container.add({
 // console.log(`C should be shown as Pending: ${container.getInstance<B>('C').status}`);
 
 container.add({
-	id: 'A',
-	kind: A,
+	id: 'GetNoProgresistsUsecase',
+	kind: GetNoProgresistsUsecase,
 	strategy: 'singleton',
 	dependencies: ['FIREBASE_INIT'],
 });
@@ -105,42 +112,44 @@ class MyController extends ExpressController {
 			container: container,
 			identifier: 'TOURNAMENTS',
 			router: router,
-			app: app,
 		});
 	}
 	configureEndpoints() {
 		this.register({
-			usecaseId: 'A',
+			usecaseId: 'GetNoProgresistsUsecase',
+			paramsMapper: (param) => {
+				return {
+					userId: param.userId.toUpperCase(),
+				};
+			},
+		});
+		this.register({
+			usecaseId: 'C',
 		});
 	}
 }
 
 const myController = new MyController();
 myController.configureEndpoints();
-app.use((req, res, next) => {
-	const {path, method} = req;
-	console.log(path, method);
-	next();
-	res;
-});
-app.get('/b', (req, res) => {
-	res.send('Hello');
-});
+// app.use((req, res, next) => {
+// 	const {path, method} = req;
+// 	console.log(path, method);
+// 	next();
+// 	res;
+// });
+// app.get('/b', (req, res) => {
+// 	res.send('Hello');
+// });
 
-app.get('/', (req, res) => {
-	res.send('Hello World!')
-  })
-// app.use('/api', router);
+// app.get('/', (req, res) => {
+// 	res.send('Hello World!');
+// });
+app.use('/api', router);
 
-
-const port =  5555;
+const port = 5555;
 app.listen(port, () => {
 	console.log('Starting users: ' + port);
 });
-
-
-
-
 
 // app.listen(port, () => {
 //   console.log(`Example app listening on port ${port}`)

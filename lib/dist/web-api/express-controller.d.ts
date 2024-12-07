@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Express, Router } from 'express-serve-static-core';
+import { Router } from 'express-serve-static-core';
 import { Container } from '../dependency-injection/container';
 import { Usecase } from '../domain/usecase';
 import { MessagesConfiguration } from './messages-configuration';
@@ -26,7 +26,6 @@ export interface ControllerConfiguration {
     container: Container;
     identifier: string;
     router: any;
-    app: any;
 }
 export declare abstract class ExpressController {
     protected configuration: ControllerConfiguration;
@@ -35,7 +34,6 @@ export declare abstract class ExpressController {
     container: Container;
     identifier: string;
     router: Router;
-    app: Express;
     constructor(configuration: ControllerConfiguration);
     abstract configureEndpoints(): void;
     private resolveLogger;

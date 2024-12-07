@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Express, Router } from 'express-serve-static-core';
+import { Router } from 'express-serve-static-core';
 
 import { Container } from '../dependency-injection/container';
 import { Usecase } from '../domain/usecase';
@@ -30,7 +30,6 @@ export interface ControllerConfiguration {
 	container: Container;
 	identifier: string;
 	router: any;
-	app: any;
 }
 
 export abstract class ExpressController {
@@ -39,11 +38,9 @@ export abstract class ExpressController {
 	container: Container;
 	identifier: string;
 	router: Router;
-	app: Express;
 	constructor(protected configuration: ControllerConfiguration) {
 		this.container = configuration.container;
 		this.identifier = configuration.identifier;
-		this.app = configuration.app;
 		this.router = configuration.router;
 
 		this.resolveLogger();
@@ -198,10 +195,11 @@ export abstract class ExpressController {
 		return `/${segment}`;
 	}
 	private getSuccessCode(usercaseId: string) {
-		return usercaseId
+		const segment = usercaseId
 			.replace(/Usecase/gi, '')
 			.replace(/([a-z])([A-Z])/g, '$1-$2')
 			.toUpperCase();
+		return `${segment}:SUCCESS`;
 	}
 	extractParam(request: Request) {
 		if (request.body && Object.keys(request.body).length) {
@@ -220,18 +218,21 @@ export abstract class ExpressController {
 	}
 
 	public register<U extends Usecase<any, any>>(registerConfiguration: RegisterConfiguration) {
-		type MethodHandler = (
-			path: string,
-			...handlers: Array<(request: Request, response: Response) => void>
-		) => void;
+		// type MethodHandler = (
+		// 	path: string,
+		// 	...handlers: Array<(request: Request, response: Response) => void>
+		// ) => void;
 
-		const usecaseHttpPath = this.makeHttpPath(registerConfiguration.usecaseId);
+		let usecaseHttpPath =
+			registerConfiguration.path || this.makeHttpPath(registerConfiguration.usecaseId);
+
+		usecaseHttpPath = usecaseHttpPath.startsWith('/') ? usecaseHttpPath : `/${usecaseHttpPath}`;
 
 		const method = (registerConfiguration.method || 'get').toLowerCase();
 
-		const methodHandler: MethodHandler = (this.app as any)[method];
-		
-		console.log({methodHandler, router: this.router, app: this.app, method, usecaseHttpPath});
+		// const methodHandler: MethodHandler = (this.app as any)[method];
+
+		// console.log({methodHandler, router: this.router, app: this.app, method, usecaseHttpPath});
 
 		const handler = (request: Request, response: Response) => {
 			const {path, method} = request;
@@ -250,7 +251,7 @@ export abstract class ExpressController {
 				const resp = this.makeErrorResponse(error);
 				response.json(resp);
 			} else {
-				let convertedParams = null;
+				let convertedParams = param;
 				if (paramsMapper) {
 					convertedParams = paramsMapper(param);
 				}
@@ -291,9 +292,17 @@ export abstract class ExpressController {
 			}
 		};
 
-		this.app.get(usecaseHttpPath, handler);
+		console.log({usecaseHttpPath, method});
 
-		methodHandler.bind(this.app, usecaseHttpPath, handler);
+		if (method == 'get') {
+			this.router.get(usecaseHttpPath, handler);
+		} else if (method == 'post') {
+			this.router.post(usecaseHttpPath, handler);
+		} else if (method == 'put') {
+			this.router.put(usecaseHttpPath, handler);
+		}
+
+		// methodHandler.bind(this.app, usecaseHttpPath, handler);
 		// methodHandler(usecaseHttpPath, handler );
 	}
 }

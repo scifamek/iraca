@@ -6,9 +6,11 @@ const domain_1 = require("iraca/domain");
 const web_api_1 = require("iraca/web-api");
 const rxjs_1 = require("rxjs");
 const express = require("express");
-class A extends domain_1.Usecase {
-    call() {
-        return (0, rxjs_1.of)('HOla');
+class GetNoProgresistsUsecase extends domain_1.Usecase {
+    call(params) {
+        console.log(params);
+        const { userId } = params;
+        return (0, rxjs_1.of)('Yo no soy progresista, soy ' + userId);
     }
 }
 class B {
@@ -16,6 +18,9 @@ class B {
 }
 class C {
     constructor(_b) { }
+    call() {
+        return (0, rxjs_1.of)('Hola C');
+    }
     hi() {
         console.log('Clase C:');
     }
@@ -37,8 +42,8 @@ container.add({
     dependencies: ['B'],
 });
 container.add({
-    id: 'A',
-    kind: A,
+    id: 'GetNoProgresistsUsecase',
+    kind: GetNoProgresistsUsecase,
     strategy: 'singleton',
     dependencies: ['FIREBASE_INIT'],
 });
@@ -61,29 +66,25 @@ class MyController extends web_api_1.ExpressController {
             container: container,
             identifier: 'TOURNAMENTS',
             router: router,
-            app: app,
         });
     }
     configureEndpoints() {
         this.register({
-            usecaseId: 'A',
+            usecaseId: 'GetNoProgresistsUsecase',
+            paramsMapper: (param) => {
+                return {
+                    userId: param.userId.toUpperCase(),
+                };
+            },
+        });
+        this.register({
+            usecaseId: 'C',
         });
     }
 }
 const myController = new MyController();
 myController.configureEndpoints();
-app.use((req, res, next) => {
-    const { path, method } = req;
-    console.log(path, method);
-    next();
-    res;
-});
-app.get('/b', (req, res) => {
-    res.send('Hello');
-});
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
+app.use('/api', router);
 const port = 5555;
 app.listen(port, () => {
     console.log('Starting users: ' + port);
