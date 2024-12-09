@@ -1,5 +1,4 @@
 import { createServer } from 'http';
-import { Observable } from 'rxjs';
 import { IracaContainer } from './dependency-injection/container';
 
 export class A {
@@ -8,15 +7,12 @@ export class A {
 		this.prefix = prefix;
 	}
 	hi() {
-		return new Observable((obs) => {
-            
-            
-            let i = 5_000_000_000;
+		return new Promise((obs) => {
+			let i = 5_000_000_000;
 			while (i > 0) {
 				i--;
 			}
-			obs.next(this.prefix + '.A.');
-			obs.complete();
+			obs(this.prefix + '.A.');
 		});
 	}
 }
@@ -29,12 +25,12 @@ container.add({
 
 const server = createServer({}, (req, res) => {
 	const r = req.url;
-    console.log(r);
-    
+	console.log(r);
+
 	if (r == '/worker') {
-		const d = container.getInstance<A>('A');
+		const d = container.getInstance<A>(A);
 		const respuesta = d.hi();
-		respuesta.subscribe((resp) => {
+		respuesta.then((resp:any) => {
 			res.writeHead(200, {'Content-Type': 'text/plain'});
 			res.end(resp + ' ' + Date.now().toString());
 		});

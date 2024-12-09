@@ -1,17 +1,24 @@
 /// <reference types="node" />
 import { EventEmitter } from 'node:events';
 import { IracaContainer } from '../dependency-injection/container';
+export type EventName = `${string}DomainEvent`;
+export declare function DomainEventKind(name: EventName): DomainEventKind;
+export interface DomainEventKind {
+    name: EventName;
+    build: Function;
+}
 export declare class DomainEvent<P = any> {
-    name: string;
+    domainEventKind: DomainEventKind;
     payload?: P | undefined;
     id: Symbol;
-    constructor(name: string, payload?: P | undefined);
+    name: EventName;
+    constructor(domainEventKind: DomainEventKind, payload?: P | undefined);
     makeId(): symbol;
 }
 export declare abstract class Usecase<Param = any, Response = any> {
     static identifier: string;
-    static events: string[];
-    abstract call(param?: Param): DomainEvent<Response>;
+    static eventKinds: DomainEventKind[];
+    abstract call(param?: Param): DomainEvent<Response> | Promise<DomainEvent<Response>>;
 }
 export interface EventRegister {
     timestamp: Date;

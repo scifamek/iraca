@@ -70,8 +70,8 @@ container.addValue({
 	value: FIREBASE_INIT,
 });
 
-const d = container.getInstance<D>('D');
-const a = container.getInstance<A>('A');
+const d = container.getInstance<D>(D);
+const a = container.getInstance<A>(A);
 d.hi();
 
 d.setPrefix('--');
@@ -104,11 +104,3 @@ d.setPrefix('--');
 
 // console.log(container.instancesDependencyTable);
 
-// const iraca = new Iraca(container);
-
-// iraca.notify(new DomainEvent('EVENT1', 789));
-// iraca.notify(new DomainEvent('EVENT2', 'Deivis'));
-
-// iraca.on('EVENT3', (payload) => {
-// 	console.log('Respondió el usecase ', payload);
-// });

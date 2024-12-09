@@ -52,6 +52,8 @@ export class IracaContainer {
 			const component =
 				(c as GenericParticleConfiguration).component ||
 				(c as AbstractParticleConfiguration).abstraction;
+			console.log('Name ', component.name);
+
 			if (c) c.id = component.name;
 		}
 		if (!c.strategy) {
@@ -125,37 +127,44 @@ export class IracaContainer {
 		this.configsTable.set(config.id, {
 			value: config.value,
 			status: 'resolved',
+			config,
 		} as ValueParticleDefinition);
 		this.resolveDependentParticles(config);
 	}
 
-	private getStateByDependencies(dependenciesId: string[]) {
+	private getStateByDependencies(dependencies: any[]) {
 		const foundDependencies: {
 			[dependencyName: string]: ParticleDefinition;
 		} = {};
 		const notFoundDependencies: Array<string> = [];
 
 		let status: Status = 'resolved';
-		for (const dependencyId of dependenciesId) {
-			const configuration: ParticleDefinition | undefined = this.configsTable.get(dependencyId);
+		for (const dependency of dependencies) {
+			const id = typeof dependency === 'string' ? (dependency as string) : dependency.name;
+
+			const configuration: ParticleDefinition | undefined = this.configsTable.get(id);
 			if (configuration) {
 				if (['no-resolved', 'pending'].includes(configuration.status)) {
 					status = 'pending';
 				}
-				foundDependencies[dependencyId] = configuration;
+				foundDependencies[id] = configuration;
 			} else {
-				notFoundDependencies.push(dependencyId);
+				notFoundDependencies.push(dependency);
 				status = 'pending';
 			}
 		}
 		return {foundDependencies, notFoundDependencies, status};
 	}
 
-	getInstance<T>(id: string, parentId?: string): T {
+	getInstance<T>(instanceClass: any, parentId?: string) {
 		const start = performance.now();
+		type TT = typeof instanceClass;
 		let startTime = process.hrtime.bigint();
+		const id = typeof instanceClass == 'string' ? instanceClass : instanceClass.name;
 
 		const savedConfiguration: ParticleDefinition | undefined = this.configsTable.get(id);
+		console.log('savedConfiguration ', id, savedConfiguration);
+
 		if (savedConfiguration) {
 			if (savedConfiguration.status == 'resolved') {
 				if ((savedConfiguration.config as ParticleValueConfiguration).value) {
@@ -168,7 +177,7 @@ export class IracaContainer {
 					//console.log('\n >>>> ', id, preciseDiffNanoseconds,endDiff, '\n');
 					/* PERFORMANCE */
 
-					return (savedConfiguration as ValueParticleDefinition).value as T;
+					return (savedConfiguration as ValueParticleDefinition).value as TT;
 				}
 
 				const innerConfig = savedConfiguration.config as ParticleConfiguration;
@@ -185,7 +194,7 @@ export class IracaContainer {
 
 						//console.log('\n >>>> ', id, preciseDiffNanoseconds,endDiff, '\n');
 						/* PERFORMANCE */
-						return tentativeInstance[0].instance as T;
+						return tentativeInstance[0].instance as TT;
 					}
 					let typeClass =
 						(savedConfiguration.config as GenericParticleConfiguration).component ||
@@ -194,6 +203,9 @@ export class IracaContainer {
 					const depnden: any[] = [];
 					const dependencies =
 						(savedConfiguration.config as ParticleConfiguration).dependencies || [];
+
+					console.log('Dependencies:', dependencies, id);
+
 					for (const ins of dependencies) {
 						const ii = this.getInstance(ins, id);
 						depnden.push(ii);
@@ -214,7 +226,7 @@ export class IracaContainer {
 
 					//console.log('\n >>>> ', id, preciseDiffNanoseconds,endDiff, '\n');
 					/* PERFORMANCE */
-					return instance as T;
+					return instance as TT;
 				} else {
 					const dependencies =
 						(savedConfiguration.config as ParticleConfiguration).dependencies || [];
@@ -247,7 +259,7 @@ export class IracaContainer {
 
 					//console.log('\n >>>> ', id, preciseDiffNanoseconds,endDiff, '\n');
 					/* PERFORMANCE */
-					return instance as T;
+					return instance as TT;
 				}
 			} else {
 				throw new Error('Class not resolved');
@@ -263,6 +275,7 @@ export class IracaContainer {
 		if (dependents) {
 			for (let i = 0; i < dependents.length; i++) {
 				const dependentConfig = dependents[i];
+
 				const res = this._add(dependentConfig);
 				if (!res) {
 					newDependents.push(dependentConfig);

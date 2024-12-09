@@ -7,3 +7,5 @@ export {
     Status
 } from './models';
 
+export { IracaContainer } from './container';
+

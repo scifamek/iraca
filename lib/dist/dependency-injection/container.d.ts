@@ -21,7 +21,7 @@ export declare class IracaContainer {
     _add(config: ParticleConfiguration): boolean;
     addValue(config: ParticleValueConfiguration): void;
     private getStateByDependencies;
-    getInstance<T>(id: string, parentId?: string): T;
+    getInstance<T>(instanceClass: any, parentId?: string): any;
     private resolveDependentParticles;
     private addPending;
 }

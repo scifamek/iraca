@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsc -p tsconfig.json",
-    "start": "node dist/dario.js"
+    "start": "node dist/dario.js",
+    "start:reactive": "node dist/reactive/reactive.js"
   },
   "dependencies": {
     "iraca": "file:../lib/dist"

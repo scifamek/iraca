@@ -2,7 +2,7 @@ export type Status = 'resolved' | 'pending' | 'no-resolved';
 export type Particle = any;
 export interface BaseParticleConfiguration {
 	id: string;
-	dependencies?: string[];
+	dependencies?: any[];
 	strategy?: 'singleton' | 'factory';
 }
 

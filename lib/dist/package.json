@@ -25,7 +25,8 @@
 		"./web-api": "./web-api/index.js",
 		"./infrastructure": "./infrastructure/index.js",
 		"./helpers": "./helpers/index.js",
-		"./domain": "./domain/index.js"
+		"./domain": "./domain/index.js",
+		"./config": "./config/index.js"
 	},
 	"devDependencies": {
 		"@types/jest": "^29.5.14",
