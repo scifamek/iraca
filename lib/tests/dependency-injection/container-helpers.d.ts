@@ -1,3 +1,4 @@
+export declare function calcularBytes(instancesTable: any): number;
 export declare class B {
     constructor(_a: A);
 }

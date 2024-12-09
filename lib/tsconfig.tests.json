@@ -1,9 +1,9 @@
 {
   "exclude": ["node_modules", "dist", "*.js"],
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
   "compilerOptions": {
     "baseUrl": "./",
-    "rootDir": "./src" /* Specify the root folder within your source files. */,
+    "rootDir": "./" /* Specify the root folder within your source files. */,
     "paths": {
       "@/*": ["src/*"]
     },

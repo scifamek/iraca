@@ -9,22 +9,37 @@ import {
 	ValueParticleDefinition,
 } from './models';
 
+type ObjectInstance = any;
 export class IracaContainer {
 	readonly pendingParticles: Map<string, ParticleConfiguration[]>;
 	configsTable: Map<string, ParticleDefinition>;
-	instancesTable: Map<
+	instancesDependencyTable: Map<
 		string,
 		Array<{
 			generatedBy: string;
-			instance: any;
+			instance: ObjectInstance;
 		}>
 	>;
 
 	constructor() {
 		this.configsTable = new Map();
-		this.instancesTable = new Map();
+		this.instancesDependencyTable = new Map();
 		this.pendingParticles = new Map();
 	}
+
+	public size(): number {
+		const objetoPlano = Array.from(this.instancesDependencyTable.entries()).map(([key, value]) => ({
+			key,
+			value: value.map((item) => ({
+				generatedBy: item.generatedBy,
+				instance: item.instance,
+			})),
+		}));
+
+		const objetoString = JSON.stringify(objetoPlano);
+		return new Blob([objetoString]).size;
+	}
+
 	addAll(container: IracaContainer) {
 		this.configsTable = {...container.configsTable};
 	}
@@ -57,8 +72,6 @@ export class IracaContainer {
 			status: Status;
 		}
 	) {
-		console.log(typeClass, config, state);
-
 		// const singletons = Object.values(state.dependencies)
 		// 	.filter((x) => x.strategy === 'singleton')
 		// 	.map((snapshot) => snapshot.instance);
@@ -82,7 +95,6 @@ export class IracaContainer {
 			(config as AbstractParticleConfiguration).implementation;
 
 		const myState = this.getStateByDependencies(config.dependencies || []);
-		console.log(111, typeClass, myState);
 
 		if (myState.status === 'resolved') {
 			this.configsTable.set(config.id, {
@@ -139,26 +151,40 @@ export class IracaContainer {
 		return {foundDependencies, notFoundDependencies, status};
 	}
 
-	flush(id: Symbol){
-		
-	}
 	getInstance<T>(id: string, parentId?: string): T {
-		console.log('Obteniendo ', id, parentId);
+		const start = performance.now();
+		let startTime = process.hrtime.bigint();
 
 		const savedConfiguration: ParticleDefinition | undefined = this.configsTable.get(id);
 		if (savedConfiguration) {
 			if (savedConfiguration.status == 'resolved') {
 				if ((savedConfiguration.config as ParticleValueConfiguration).value) {
+					/* PERFORMANCE */
+					const end = performance.now();
+					const preciseDiffNanoseconds = (end - start) * 1000;
+					let endTime = process.hrtime.bigint();
+					const endDiff = endTime - startTime;
+
+					//console.log('\n >>>> ', id, preciseDiffNanoseconds,endDiff, '\n');
+					/* PERFORMANCE */
+
 					return (savedConfiguration as ValueParticleDefinition).value as T;
 				}
 
 				const innerConfig = savedConfiguration.config as ParticleConfiguration;
-				console.log(innerConfig.strategy,45444);
-				
+
 				if (innerConfig.strategy == 'singleton') {
-					const tentativeInstance = this.instancesTable.get(id);
+					const tentativeInstance = this.instancesDependencyTable.get(id);
 
 					if (tentativeInstance && tentativeInstance.length) {
+						/* PERFORMANCE */
+						const end = performance.now();
+						const preciseDiffNanoseconds = (end - start) * 1000;
+						let endTime = process.hrtime.bigint();
+						const endDiff = endTime - startTime;
+
+						//console.log('\n >>>> ', id, preciseDiffNanoseconds,endDiff, '\n');
+						/* PERFORMANCE */
 						return tentativeInstance[0].instance as T;
 					}
 					let typeClass =
@@ -174,12 +200,20 @@ export class IracaContainer {
 					}
 					const constructor = Reflect.construct(typeClass, depnden);
 					const instance = constructor;
-					this.instancesTable.set(id, [
+					this.instancesDependencyTable.set(id, [
 						{
 							generatedBy: parentId || id,
 							instance,
 						},
 					]);
+					/* PERFORMANCE */
+					const end = performance.now();
+					const preciseDiffNanoseconds = (end - start) * 1000;
+					let endTime = process.hrtime.bigint();
+					const endDiff = endTime - startTime;
+
+					//console.log('\n >>>> ', id, preciseDiffNanoseconds,endDiff, '\n');
+					/* PERFORMANCE */
 					return instance as T;
 				} else {
 					const dependencies =
@@ -187,25 +221,32 @@ export class IracaContainer {
 					const depnden: any[] = [];
 					for (const ins of dependencies) {
 						const ii = this.getInstance(ins, id);
+
 						depnden.push(ii);
 					}
 					let typeClass =
 						(savedConfiguration.config as GenericParticleConfiguration).component ||
 						(savedConfiguration.config as AbstractParticleConfiguration).implementation;
 
-					console.log(' / ', depnden);
+					const instance: any = Reflect.construct(typeClass, depnden);
 
-					const constructor = Reflect.construct(typeClass, depnden);
-					const instance = constructor;
-
-					if (!this.instancesTable.get(id)) {
-						this.instancesTable.set(id, []);
+					instance.__id__ = Symbol();
+					if (!this.instancesDependencyTable.get(id)) {
+						this.instancesDependencyTable.set(id, []);
 					}
-					const prev = this.instancesTable.get(id);
+					const prev = this.instancesDependencyTable.get(id);
 					prev?.push({
 						generatedBy: parentId || id,
 						instance,
 					});
+					/* PERFORMANCE */
+					const end = performance.now();
+					const preciseDiffNanoseconds = (end - start) * 1000;
+					let endTime = process.hrtime.bigint();
+					const endDiff = endTime - startTime;
+
+					//console.log('\n >>>> ', id, preciseDiffNanoseconds,endDiff, '\n');
+					/* PERFORMANCE */
 					return instance as T;
 				}
 			} else {

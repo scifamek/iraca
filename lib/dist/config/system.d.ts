@@ -15,7 +15,7 @@ export declare abstract class Usecase<Param = any, Response = any> {
 }
 export interface EventRegister {
     timestamp: Date;
-    payload: any;
+    domainEvent: DomainEvent;
 }
 export declare class Iraca extends EventEmitter {
     dependenciesContainer: IracaContainer;

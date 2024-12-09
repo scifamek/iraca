@@ -1,12 +1,14 @@
 import { AbstractParticleConfiguration, GenericParticleConfiguration, ParticleConfiguration, ParticleDefinition, ParticleValueConfiguration, Status } from './models';
+type ObjectInstance = any;
 export declare class IracaContainer {
     readonly pendingParticles: Map<string, ParticleConfiguration[]>;
     configsTable: Map<string, ParticleDefinition>;
-    instancesTable: Map<string, Array<{
+    instancesDependencyTable: Map<string, Array<{
         generatedBy: string;
-        instance: any;
+        instance: ObjectInstance;
     }>>;
     constructor();
+    size(): number;
     addAll(container: IracaContainer): void;
     add(config: Omit<GenericParticleConfiguration, 'id'> | Omit<AbstractParticleConfiguration, 'id'>): boolean;
     makeInstance(typeClass: any, config: ParticleConfiguration, state: {
@@ -23,3 +25,4 @@ export declare class IracaContainer {
     private resolveDependentParticles;
     private addPending;
 }
+export {};

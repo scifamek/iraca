@@ -19,7 +19,7 @@ export abstract class Usecase<Param = any, Response = any> {
 
 export interface EventRegister {
 	timestamp: Date;
-	payload: any;
+	domainEvent: DomainEvent;
 }
 export class Iraca extends EventEmitter {
 	eventsRegistry: Map<Symbol, EventRegister>;
@@ -30,8 +30,7 @@ export class Iraca extends EventEmitter {
 		this.eventsRegistry = new Map();
 	}
 	notify(domainEvent: DomainEvent) {
-		this.eventsRegistry.set(domainEvent.id, {timestamp: new Date(), payload: domainEvent.payload});
-
+		this.eventsRegistry.set(domainEvent.id, {timestamp: new Date(), domainEvent: domainEvent});
 		this.emit(domainEvent.name, domainEvent.payload);
 	}
 	register(usecase: any) {
@@ -41,14 +40,12 @@ export class Iraca extends EventEmitter {
 		for (const event of events) {
 			this.on(event, (data) => {
 				console.log(identifier, ' - ', data);
-                
 
-                // const constructor = () =>
-                //     Reflect.construct(
-                //         usecase,
-                //         Object.values(myState.dependencies).map((snapshot) => snapshot.instance)
-                //     );
-    
+				// const constructor = () =>
+				//     Reflect.construct(
+				//         usecase,
+				//         Object.values(myState.dependencies).map((snapshot) => snapshot.instance)
+				//     );
 			});
 		}
 		console.log(identifier, events);
