@@ -8,6 +8,6 @@ export class GetFreePlanetsUsecase extends Usecase<any, number> {
 	}
 	call(param: any): DomainEvent<number> {
 		console.log(param);
-		return new DomainEvent(GottenFreePlanetsDomainEvent, 789);
+		return GottenFreePlanetsDomainEvent.build(789);
 	}
 }

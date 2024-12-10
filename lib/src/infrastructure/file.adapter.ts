@@ -1,8 +1,6 @@
-import { Observable } from 'rxjs';
-
 export abstract class FileAdapter {
-  abstract uploadFile(filePath: string, file: string): Observable<any>;
-  abstract deleteFile(filePath: string): Observable<any>;
-  abstract getAbsoluteHTTPUrl(filePath: string): Observable<string>;
-  abstract getRelativeUrl(filePath: string): string;
+	abstract uploadFile(filePath: string, file: string): Promise<any>;
+	abstract deleteFile(filePath: string): Promise<any>;
+	abstract getAbsoluteHTTPUrl(filePath: string): Promise<string>;
+	abstract getRelativeUrl(filePath: string): string;
 }

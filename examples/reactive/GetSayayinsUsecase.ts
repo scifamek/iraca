@@ -2,19 +2,22 @@ import { DomainEvent, Usecase } from 'iraca/config';
 import { GetSayayinsDomainEvent, GottenSayayinsDomainEvent } from './events';
 import { Repository } from './repository';
 
-export type MyParam = string;
+export type MyParam = {
+	count: number;
+};
 
-export class GetSayayinsUsecase extends Usecase<MyParam, number> {
+export class GetSayayinsUsecase extends Usecase<MyParam, any> {
 	static eventKinds = [GetSayayinsDomainEvent];
 
-	constructor(private repository: Repository, private asd: string) {
+	constructor(private repository: Repository) {
 		super();
-		console.log('Dependencia ', this.repository, this.asd);
 	}
 
-	call(param: MyParam): DomainEvent<number> | Promise<DomainEvent<number>> {
-		return this.repository.getById(param).then((result: any) => {
-			return GottenSayayinsDomainEvent.build({...result, ki: this.asd});
-		});
+	call(param: MyParam): DomainEvent<any> | Promise<DomainEvent<any>> {
+		const count = param ? param.count || 5 : 5;
+
+		return this.repository
+			.get(count)
+			.then((result: any) => GottenSayayinsDomainEvent.build(result));
 	}
 }

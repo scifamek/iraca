@@ -5,3 +5,4 @@ export const GottenSayayinsDomainEvent = DomainEventKind('GottenSayayinsDomainEv
 
 export const GottenFreePlanetsDomainEvent = DomainEventKind('GottenFreePlanetsDomainEvent');
 export const GetFreePlanetsDomainEvent = DomainEventKind('GetFreePlanetsDomainEvent');
+export const GottenHumansDomainEvent = DomainEventKind('GottenHumansDomainEvent');

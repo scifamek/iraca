@@ -1,5 +1,7 @@
 // import { Container } from 'iraca/dependency-injection';
 
+import express, { Router } from "express";
+
 // class A {}
 // class B {
 //   constructor(_a: A) {}
@@ -36,20 +38,11 @@
 
 // console.log('C was added');
 // console.log(`C should be shown as Pending: ${container.getInstance<B>('C').status}`);
-
 // container.add({
 //   id: 'A',
 //   kind: A,
 //   strategy: 'singleton',
 //   dependencies: ['FIREBASE_INIT'],
-// });
-// console.log('A was added');
-// console.log(`A should be shown as Pending: ${container.getInstance<B>('A').status}`);
-
-// container.add({
-//   id: 'D',
-//   kind: D,
-//   strategy: 'singleton',
 //   dependencies: ['A'],
 // });
 
@@ -80,7 +73,11 @@
 //   )
 // );
 
+const app = express();
+const router = Router();
 
+// app.use(bodyParser.json({limit: '10mb'}));
+// app.use(bodyParser.urlencoded({extended: true, limit: '10mb'}));
 
 // const g: C = container.getInstance<C>('C').instance!;
 // g.hi();

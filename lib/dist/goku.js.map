@@ -1,1 +1,1 @@
-{"version":3,"file":"goku.js","sourceRoot":"","sources":["../src/goku.ts"],"names":[],"mappings":";;AAAA,mDAAwD;AAExD,OAAO,CAAC,GAAG,CAAC,aAAa,EAAE,2BAAU,CAAC,CAAC;AAEvC,MAAM,EAAC,OAAO,EAAE,MAAM,EAAC,GAAG,2BAAU,CAAC;AACrC,2BAAU,aAAV,2BAAU,uBAAV,2BAAU,CAAE,WAAW,CAAC,MAAM,CAAC,CAAC"}
+{"version":3,"file":"goku.js","sourceRoot":"","sources":["../src/goku.ts"],"names":[],"mappings":";;AAAA,mDAAwD;AAExD,OAAO,CAAC,GAAG,CAAC,aAAa,EAAE,2BAAU,CAAC,CAAC;AAEvC,MAAM,EAAC,OAAO,EAAE,MAAM,EAAC,GAAG,2BAAU,CAAC;AACrC,2BAAU,EAAE,WAAW,CAAC,MAAM,CAAC,CAAC"}

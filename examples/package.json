@@ -10,9 +10,13 @@
     "start:reactive": "node dist/reactive/reactive.js"
   },
   "dependencies": {
-    "iraca": "file:../lib/dist"
+    "axios": "^1.7.9",
+    "express": "4.21.2",
+    "iraca": "file:../lib/dist",
+    "rxjs": "^6.0.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "typescript": "^4.5.4"
   },
   "author": "",

@@ -1,4 +1,4 @@
-import { AbstractParticleConfiguration, GenericParticleConfiguration, ParticleConfiguration, ParticleDefinition, ParticleValueConfiguration, Status } from './models';
+import { AbstractParticleConfiguration, GenericParticleConfiguration, ParticleConfiguration, ParticleDefinition, ParticleValueConfiguration } from './models';
 type ObjectInstance = any;
 export declare class IracaContainer {
     readonly pendingParticles: Map<string, ParticleConfiguration[]>;
@@ -10,18 +10,12 @@ export declare class IracaContainer {
     constructor();
     size(): number;
     addAll(container: IracaContainer): void;
+    addByPattern(dirname: string, pattern: RegExp): Promise<string[]>;
     add(config: Omit<GenericParticleConfiguration, 'id'> | Omit<AbstractParticleConfiguration, 'id'>): boolean;
-    makeInstance(typeClass: any, config: ParticleConfiguration, state: {
-        foundDependencies: {
-            [dependencyName: string]: ParticleDefinition;
-        };
-        notFoundDependencies: string[];
-        status: Status;
-    }): void;
-    _add(config: ParticleConfiguration): boolean;
+    private _add;
     addValue(config: ParticleValueConfiguration): void;
     private getStateByDependencies;
-    getInstance<T>(instanceClass: any, parentId?: string): any;
+    getInstance<TT>(instanceClass: any, parentId?: string): TT;
     private resolveDependentParticles;
     private addPending;
 }

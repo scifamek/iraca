@@ -1,7 +1,7 @@
 export interface BaseHTTPResponse<T> {
     meta: {
         code: string;
-        message: string;
+        message?: string;
     };
     data: T;
 }

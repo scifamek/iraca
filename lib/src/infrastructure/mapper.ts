@@ -1,114 +1,103 @@
-import { Observable, of, zip } from 'rxjs';
-import { map } from 'rxjs/operators';
-
 export abstract class Mapper<T> {
-  attributesMapper: {
-    [index: string]: {
-      name: string;
-      to?: Function;
-      from?: (value: any) => Observable<any>;
-      default?: any;
-    };
-  };
+	attributesMapper: {
+		[index: string]: {
+			name: string;
+			to?: Function;
+			from?: (value: any) => Promise<any>;
+			default?: any;
+		};
+	};
 
-  constructor() {
-    this.attributesMapper = {};
-  }
+	constructor() {
+		this.attributesMapper = {};
+	}
 
-  fromJson(obj: any): Observable<T | undefined> {
-    const values = Object.values(this.attributesMapper);
-    const keys = Object.keys(this.attributesMapper);
-    const newKeys: Observable<{ key: string; value: any }>[] = [];
-    if (!obj) {
-      return of(undefined);
-    }
-    for (let index = 0; index < values.length; index++) {
-      const config = values[index];
+	fromJson(obj: any): Promise<T | undefined> {
+		const values = Object.values(this.attributesMapper);
+		const keys = Object.keys(this.attributesMapper);
+		const newKeys: Promise<{key: string; value: any}>[] = [];
+		if (!obj) {
+			return Promise.resolve(undefined);
+		}
+		for (let index = 0; index < values.length; index++) {
+			const config = values[index];
 
-      const value: string = config.name;
-      const key: string = keys[index];
+			const value: string = config.name;
+			const key: string = keys[index];
 
-      let mappedValue: Observable<{ key: string; value: any }> | undefined = undefined;
-      if (config.from) {
-        if (obj[value] !== undefined) {
-          mappedValue = config.from(obj[value]).pipe(
-            map((val) => {
-              return {
-                key,
-                value: val,
-              };
-            })
-          );
-        } else if (config.default != undefined) {
-          mappedValue = of(config.default).pipe(
-            map((val) => {
-              return {
-                key,
-                value: val,
-              };
-            })
-          );
-        } else {
-          mappedValue = undefined;
-        }
-      } else {
-        if (obj[value] !== undefined) {
-          mappedValue = of({
-            key,
-            value: obj[value],
-          });
-        } else if (config.default !== undefined) {
-          mappedValue = of({
-            key,
-            value: config.default,
-          });
-        } else {
-          mappedValue = undefined;
-        }
-      }
-      if (mappedValue) {
-        newKeys.push(mappedValue);
-      }
-    }
-    return newKeys.length > 0
-      ? zip(...newKeys).pipe(
-          map((mappedAttributes) => {
-            const result: any = {};
-            for (const mappedAttribute of mappedAttributes) {
-              result[mappedAttribute.key] = mappedAttribute.value;
-            }
-            return result as T;
-          })
-        )
-      : of({} as unknown as T);
-  }
+			let mappedValue: Promise<{key: string; value: any}> | undefined = undefined;
+			if (config.from) {
+				if (obj[value] !== undefined) {
+					mappedValue = config.from(obj[value]).then((val) => {
+						return {
+							key,
+							value: val,
+						};
+					});
+				} else if (config.default != undefined) {
+					mappedValue = Promise.resolve(config.default).then((val) => {
+						return {
+							key,
+							value: val,
+						};
+					});
+				} else {
+					mappedValue = undefined;
+				}
+			} else {
+				if (obj[value] !== undefined) {
+					mappedValue = Promise.resolve({
+						key,
+						value: obj[value],
+					});
+				} else if (config.default !== undefined) {
+					mappedValue = Promise.resolve({
+						key,
+						value: config.default,
+					});
+				} else {
+					mappedValue = undefined;
+				}
+			}
+			if (mappedValue) {
+				newKeys.push(mappedValue);
+			}
+		}
+		return Promise.all(newKeys).then((mappedAttributes) => {
+			const result: any = {};
+			for (const mappedAttribute of mappedAttributes) {
+				result[mappedAttribute.key] = mappedAttribute.value;
+			}
+			return result as T;
+		});
+	}
 
-  toJson(obj: T): any {
-    const values = Object.values(this.attributesMapper);
-    const keys = Object.keys(this.attributesMapper);
-    const result: any = {} as T;
-    for (let index = 0; index < values.length; index++) {
-      const config = values[index];
-      const value: string = values[index].name;
-      const key: string = keys[index];
+	toJson(obj: T): any {
+		const values = Object.values(this.attributesMapper);
+		const keys = Object.keys(this.attributesMapper);
+		const result: any = {} as T;
+		for (let index = 0; index < values.length; index++) {
+			const config = values[index];
+			const value: string = values[index].name;
+			const key: string = keys[index];
 
-      let mappedValue = undefined;
+			let mappedValue = undefined;
 
-      if ((obj as any)[key] === undefined) {
-        if (config.default !== undefined) {
-          mappedValue = config.default;
-        }
-      } else {
-        mappedValue = (obj as any)[key];
-        if (config.to) {
-          mappedValue = config.to((obj as any)[key]);
-        }
-      }
+			if ((obj as any)[key] === undefined) {
+				if (config.default !== undefined) {
+					mappedValue = config.default;
+				}
+			} else {
+				mappedValue = (obj as any)[key];
+				if (config.to) {
+					mappedValue = config.to((obj as any)[key]);
+				}
+			}
 
-      if (mappedValue !== undefined) {
-        result[value] = mappedValue;
-      }
-    }
-    return result as T;
-  }
+			if (mappedValue !== undefined) {
+				result[value] = mappedValue;
+			}
+		}
+		return result as T;
+	}
 }

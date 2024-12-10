@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'fs';
+import { generateError } from '../helpers';
 import {
 	AbstractParticleConfiguration,
 	ClassParticleDefinition,
@@ -10,6 +12,12 @@ import {
 } from './models';
 
 type ObjectInstance = any;
+
+const ComponentIsNotConfiguredYet = generateError(
+	'ComponentIsNotConfiguredYet',
+	'the {id} component is not configured yet'
+);
+const ClassNotResolved = generateError('ClassNotResolved', 'the {c} is not resolved yet');
 export class IracaContainer {
 	readonly pendingParticles: Map<string, ParticleConfiguration[]>;
 	configsTable: Map<string, ParticleDefinition>;
@@ -44,50 +52,63 @@ export class IracaContainer {
 		this.configsTable = {...container.configsTable};
 	}
 
-	add(
+	public async addByPattern(dirname: string, pattern: RegExp) {
+		const files = readdirSync(dirname);
+		const foundFiles = files
+			.filter((x) => !x.endsWith('.map') && !x.endsWith('.d.ts'))
+			.filter((file) => !!file.match(pattern));
+
+		for (const file of foundFiles) {
+			const usecaseName = file.replace(/\.js$/, '');
+			const declarationFileContent = readFileSync(`${dirname}/${usecaseName}.d.ts`, 'utf-8');
+			const constructorPattern = /^.*constructor\((.*)\)/gm;
+
+
+			const dependencies = [];
+			if (declarationFileContent) {
+				const result = constructorPattern.exec(declarationFileContent);
+				if (result) {
+					const constructorLine = result[1];
+					const injectionPattern = /([\w]+)[\s]*:[\s]*([\w]+)/gi;
+					let found = injectionPattern.exec(constructorLine);
+					while (found) {
+						dependencies.push(found[2]);
+						found = injectionPattern.exec(constructorLine);
+					}
+				}
+			}
+
+			const res = await import(`${dirname}/${file}`);
+			const a = res[usecaseName];
+			this.add({
+				component: a,
+				dependencies,
+			});
+		}
+
+		return foundFiles;
+	}
+	public add(
 		config: Omit<GenericParticleConfiguration, 'id'> | Omit<AbstractParticleConfiguration, 'id'>
 	): boolean {
 		const c = Object.assign(config);
+
 		if (!c.id) {
 			const component =
 				(c as GenericParticleConfiguration).component ||
 				(c as AbstractParticleConfiguration).abstraction;
-			console.log('Name ', component.name);
 
 			if (c) c.id = component.name;
 		}
 		if (!c.strategy) {
 			c.strategy = 'singleton';
 		}
+
 		const res = this._add(c);
 		return res;
 	}
 
-	makeInstance(
-		typeClass: any,
-		config: ParticleConfiguration,
-		state: {
-			foundDependencies: {
-				[dependencyName: string]: ParticleDefinition;
-			};
-			notFoundDependencies: string[];
-			status: Status;
-		}
-	) {
-		// const singletons = Object.values(state.dependencies)
-		// 	.filter((x) => x.strategy === 'singleton')
-		// 	.map((snapshot) => snapshot.instance);
-		// const factories = Object.values(state.dependencies)
-		// 	.filter((x) => x.strategy === 'factory')
-		// 	.map((snapshot) => snapshot.instances);
-		// const constructor = () => Reflect.construct(typeClass, singletons);
-		// this.configsTable.set(config.id, {
-		// 	constructor,
-		// 	config,
-		// 	status: 'resolved',
-		// });
-	}
-	_add(config: ParticleConfiguration): boolean {
+	private _add(config: ParticleConfiguration): boolean {
 		const prevRegisteredParticule = this.configsTable.get(config.id);
 		if (prevRegisteredParticule && prevRegisteredParticule.constructor !== null) {
 			return true;
@@ -103,16 +124,12 @@ export class IracaContainer {
 				status: 'resolved',
 				config,
 			} as ClassParticleDefinition);
-			this.makeInstance;
-			// if (config.strategy == 'singleton') {
-			// 	this.makeInstance(typeClass, config, myState);
-			// }
 
 			this.resolveDependentParticles(config);
 			return true;
 		} else {
-			// this.addPending(config, myState.notFoundDependencies);
-			this.addPending;
+			this.addPending(config, myState.notFoundDependencies);
+			// this.addPending;
 
 			this.configsTable.set(config.id, {
 				status: 'pending',
@@ -123,7 +140,7 @@ export class IracaContainer {
 		}
 	}
 
-	addValue(config: ParticleValueConfiguration) {
+	public addValue(config: ParticleValueConfiguration) {
 		this.configsTable.set(config.id, {
 			value: config.value,
 			status: 'resolved',
@@ -156,14 +173,12 @@ export class IracaContainer {
 		return {foundDependencies, notFoundDependencies, status};
 	}
 
-	getInstance<T>(instanceClass: any, parentId?: string) {
+	public getInstance<TT>(instanceClass: any, parentId?: string) {
 		const start = performance.now();
-		type TT = typeof instanceClass;
 		let startTime = process.hrtime.bigint();
 		const id = typeof instanceClass == 'string' ? instanceClass : instanceClass.name;
 
 		const savedConfiguration: ParticleDefinition | undefined = this.configsTable.get(id);
-		console.log('savedConfiguration ', id, savedConfiguration);
 
 		if (savedConfiguration) {
 			if (savedConfiguration.status == 'resolved') {
@@ -204,12 +219,12 @@ export class IracaContainer {
 					const dependencies =
 						(savedConfiguration.config as ParticleConfiguration).dependencies || [];
 
-					console.log('Dependencies:', dependencies, id);
 
 					for (const ins of dependencies) {
 						const ii = this.getInstance(ins, id);
 						depnden.push(ii);
 					}
+					
 					const constructor = Reflect.construct(typeClass, depnden);
 					const instance = constructor;
 					this.instancesDependencyTable.set(id, [
@@ -262,10 +277,10 @@ export class IracaContainer {
 					return instance as TT;
 				}
 			} else {
-				throw new Error('Class not resolved');
+				throw new ClassNotResolved({id});
 			}
 		}
-		throw new Error(`${id} component is not configuret yet`);
+		throw new ComponentIsNotConfiguredYet({id});
 	}
 
 	private resolveDependentParticles(config: ParticleConfiguration | ParticleValueConfiguration) {
